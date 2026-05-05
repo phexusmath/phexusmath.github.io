@@ -1,34 +1,32 @@
-import json
-import os
-import requests
-from pathlib import Path
-import urllib3
+"""
+Troubleshooting script for jsdelivr URL parsing
+Tests various URL formats and shows what's being parsed
+"""
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import re
 
-# Load URLs from base_urls.json
-def load_urls(filename='base_urls.json'):
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f"Error: {filename} not found!")
-        return []
+# Test URLs
+TEST_URLS = [
+    # Format 1: with @ref
+    "https://cdn.jsdelivr.net/gh/user/repo@main/path/",
+    "https://cdn.jsdelivr.net/gh/user/repo@v1.0.0/path/file.txt",
+    
+    # Format 2: without @ref (should use main)
+    "https://cdn.jsdelivr.net/gh/user/repo/path/",
+    "https://cdn.jsdelivr.net/gh/user/repo/",
+    
+    # Format 3: complex paths
+    "https://cdn.jsdelivr.net/gh/kartik-v/bootstrap-fileinput@5.5.0/js/plugins/",
+    "https://cdn.jsdelivr.net/gh/derrickoswald/CIMSpark@master/img/CIMTool.png",
+    
+    # Edge cases
+    "https://cdn.jsdelivr.net/gh/user/repo@branch/",
+    "https://cdn.jsdelivr.net/gh/user/repo/file.txt",
+]
 
-# Create output directory
-def create_output_dir(dirname='downloaded_games'):
-    Path(dirname).mkdir(exist_ok=True)
-    return dirname
-
-# Convert jsdelivr URL to GitHub API URL
-def get_github_api_url(jsdelivr_url):
-    """
-    Convert https://cdn.jsdelivr.net/gh/user/repo@ref/path/
-    to https://api.github.com/repos/user/repo/contents/path?ref=ref
-    """
-    # Extract parts from jsdelivr URL
-    # Format: https://cdn.jsdelivr.net/gh/USER/REPO@REF/PATH/ or
-    #         https://cdn.jsdelivr.net/gh/USER/REPO/PATH/
+def debug_parse_old(jsdelivr_url):
+    """Original parsing logic - shows what's wrong"""
+    print(f"\n📍 Testing: {jsdelivr_url}")
     
     parts = jsdelivr_url.replace('https://cdn.jsdelivr.net/gh/', '')
     
@@ -50,89 +48,99 @@ def get_github_api_url(jsdelivr_url):
     # Remove trailing slash from path
     path = path.rstrip('/')
     
-    user, repo = repo_part.split('/')
+    try:
+        user, repo = repo_part.split('/')
+        
+        api_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
+        if ref:
+            api_url += f"?ref={ref}"
+        
+        print(f"  ✓ User: {user}")
+        print(f"  ✓ Repo: {repo}")
+        print(f"  ✓ Ref: {ref}")
+        print(f"  ✓ Path: {path}")
+        print(f"  ✓ API URL: {api_url}")
+        return True
+    except Exception as e:
+        print(f"  ✗ ERROR: {e}")
+        return False
+
+
+def debug_parse_new(jsdelivr_url):
+    """Fixed parsing logic"""
+    print(f"\n✨ FIXED: {jsdelivr_url}")
+    
+    # Remove the base URL
+    parts = jsdelivr_url.replace('https://cdn.jsdelivr.net/gh/', '').rstrip('/')
+    
+    # Pattern: user/repo[@ref][/path]
+    # Match: user/repo or user/repo@ref or user/repo@ref/path or user/repo/path
+    match = re.match(r'^([^/@]+)/([^/@]+)(?:@([^/]+))?(?:/(.+))?$', parts)
+    
+    if not match:
+        print(f"  ✗ ERROR: Could not parse URL")
+        return False
+    
+    user, repo, ref, path = match.groups()
+    
+    # Default ref to 'main' if not specified
+    if not ref:
+        ref = 'main'
+    
+    # Default path to empty string if not specified
+    if not path:
+        path = ''
     
     api_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
     if ref:
         api_url += f"?ref={ref}"
     
-    return api_url, user, repo, ref, path
+    print(f"  ✓ User: {user}")
+    print(f"  ✓ Repo: {repo}")
+    print(f"  ✓ Ref: {ref}")
+    print(f"  ✓ Path: {path}")
+    print(f"  ✓ API URL: {api_url}")
+    return True
 
-# Download repository contents recursively
-def download_repo_contents(api_url, output_dir, game_name):
-    """Download all files from GitHub API recursively"""
-    try:
-        response = requests.get(api_url, timeout=30, verify=False)
-        response.raise_for_status()
-        
-        data = response.json()
-        
-        # If it's a file, download it
-        if isinstance(data, dict) and 'download_url' in data:
-            file_response = requests.get(data['download_url'], timeout=30, verify=False)
-            file_response.raise_for_status()
-            
-            filepath = os.path.join(output_dir, game_name, data['name'])
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            
-            with open(filepath, 'wb') as f:
-                f.write(file_response.content)
-            print(f"  ✓ {data['name']}")
-            return True
-        
-        # If it's a directory, recursively download contents
-        elif isinstance(data, list):
-            for item in data:
-                if item['type'] == 'file':
-                    file_response = requests.get(item['download_url'], timeout=30, verify=False)
-                    file_response.raise_for_status()
-                    
-                    filepath = os.path.join(output_dir, game_name, item['path'])
-                    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                    
-                    with open(filepath, 'wb') as f:
-                        f.write(file_response.content)
-                    print(f"  ✓ {item['path']}")
-                
-                elif item['type'] == 'dir':
-                    # Recursively download subdirectory
-                    download_repo_contents(item['url'], output_dir, game_name)
-            
-            return True
-        
-    except requests.exceptions.RequestException as e:
-        print(f"✗ Failed to download {game_name}: {e}")
-        return False
-
-# Main scraper function
-def scrape_all(json_file='base_urls.json', output_dir='downloaded_games'):
-    games = load_urls(json_file)
-    
-    if not games:
-        print("No games to download.")
-        return
-    
-    output_dir = create_output_dir(output_dir)
-    print(f"Starting download to '{output_dir}'...\n")
-    
-    for game in games:
-        name = game.get('name', 'unknown')
-        url = game.get('url', '')
-        
-        if not url:
-            print(f"✗ Skipped {name}: No URL provided")
-            continue
-        
-        print(f"Downloading {name}...")
-        
-        try:
-            api_url, user, repo, ref, path = get_github_api_url(url)
-            download_repo_contents(api_url, output_dir, name)
-            print(f"✓ Completed: {name}\n")
-        except Exception as e:
-            print(f"✗ Error processing {name}: {e}\n")
-    
-    print("Done!")
 
 if __name__ == '__main__':
-    scrape_all()
+    print("=" * 70)
+    print("ORIGINAL PARSING LOGIC")
+    print("=" * 70)
+    
+    for url in TEST_URLS:
+        debug_parse_old(url)
+    
+    print("\n\n" + "=" * 70)
+    print("FIXED PARSING LOGIC")
+    print("=" * 70)
+    
+    for url in TEST_URLS:
+        debug_parse_new(url)
+    
+    print("\n" + "=" * 70)
+    print("SUMMARY OF FIXES")
+    print("=" * 70)
+    print("""
+The original logic had these issues:
+
+1. ❌ When no @ref exists, it tries to split path as "user/repo/path"
+   but then extracts path from parts_list[2:], which can include
+   the repo name if splitting is wrong.
+
+2. ❌ Trailing slashes cause empty string in path, leading to
+   queries like "/contents/" which may fail.
+
+3. ❌ Edge case: "user/repo/file.txt" (no @ref, just file)
+   fails because it assumes parts_list[0] = user, [1] = repo,
+   but with trailing content it doesn't parse correctly.
+
+4. ❌ The logic doesn't validate the user/repo split properly.
+
+The fixed version:
+✓ Uses regex to properly match user/repo[@ref][/path]
+✓ Handles all spacing and format variations
+✓ Defaults ref to 'main' only when not provided
+✓ Validates structure before processing
+✓ Removes trailing slashes early to avoid edge cases
+    """)

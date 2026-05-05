@@ -18,3 +18,11 @@ just download it with right click save as
 then do the same thing with the links it takes you to 
 
 everything should work
+
+
+ok actuall im soft launching visviz.com
+
+ok front end is terribly vibe coded so im going to need you to actually fix it and make it look good + trouble shoot
+
+## 📦 Repository Size
+![Repo Size](https://img.shields.io/github/repo-size/phexusmath/phexusmath.github.io)
