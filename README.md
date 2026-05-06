@@ -7,7 +7,9 @@ https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/
 they have to be in the files folder if you copy from the google doc. 
 ![Repo Size](https://img.shields.io/github/repo-size/phexusmath/phexusmath.github.io)
 
-
+important: here is all the webport games. 
+these will work im pretty sure
+https://github.com/genizy/web-port/tree/main
 to do list:
 can you fix 1v1.lol 
 ok literally every game is broken like most of them. 
