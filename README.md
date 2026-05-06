@@ -4,9 +4,8 @@
 
 ## get games here
 
-These are the primary sources being used to populate the repository:
 
-| Source | Link | Notes |
+| source | link | notes |
 | :--- | :--- | :--- |
 | **lots of games** | [GitHub Repo](https://github.com/bubbls/UGS-Assets/tree/main) | just download dem |
 | **web ports** | [GitHub Repo](https://github.com/genizy/web-port/tree/main) | you can make these 1 file i can show you how |
@@ -19,3 +18,4 @@ These are the primary sources being used to populate the repository:
 
 - [ ] fix 1v1.lol
 - [ ] fix run
+- [ ] fix all the other games
