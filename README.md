@@ -29,5 +29,6 @@ Some of the youtube playables games are broken. I can fix them all when i get ho
 
 
 
-games dont load from list.json anymore now it loads from combined_games.json
+🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+
 
