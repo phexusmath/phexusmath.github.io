@@ -50,33 +50,38 @@ async function loadGame(e) {
     try {
         let a = await fetch(`${t}index.html`),
             l = await a.text();
-
-        const isCompletePath = window.location.pathname.includes('/complete');
         
-        if (isCdnAvailable || isCompletePath) {
-            let r = e.cdn;
+        let r = e.cdn;
+        let baseTag = "";
 
-            if (isCompletePath) {
-                r = "https://phexusmath.github.io/"; 
-            } else if (r && "githack" === activeBaseUrl) {
+        if (isCdnAvailable && r) {
+            if ("githack" === activeBaseUrl) {
                 r = r.replace("https://cdn.jsdelivr.net/gh/", "https://raw.githack.com/").replace("@", "/");
             }
+            baseTag = `<base href="${r}">`;
+        } else {
+            baseTag = `<base href="https://phexusmath.github.io/">`;
+        }
 
-            if (r) {
-                let n = `<base href="${r}">`;
-                l = (l = l.replace(/<base[^>]*>/gi, "")).includes("<head>") 
-                    ? l.replace("<head>", `<head>\n    ${n}`) 
-                    : n + l;
-            }
+        l = l.replace(/<base[^>]*>/gi, "");
+        if (l.includes("<head>")) {
+            l = l.replace("<head>", `<head>\n    ${baseTag}`);
+        } else {
+            l = baseTag + l;
         }
 
         currentBlobUrl && URL.revokeObjectURL(currentBlobUrl);
         let s = new Blob([l], {
             type: "text/html"
         });
-        currentBlobUrl = URL.createObjectURL(s), gameFrame.src = currentBlobUrl, libraryEl.style.display = "none", viewportEl.style.display = "flex"
+        
+        currentBlobUrl = URL.createObjectURL(s);
+        gameFrame.src = currentBlobUrl;
+        libraryEl.style.display = "none";
+        viewportEl.style.display = "flex";
+        
     } catch (i) {
-        console.error("Load Error:", i)
+        console.error("Load Error:", i);
     }
 }
 async function init() {
