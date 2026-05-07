@@ -55,12 +55,12 @@ async function loadGame(e) {
     let isCompleteGame = /\/complete\//.test(e.url);
 
     if (isCompleteGame) {
-        // Games in the /complete folder always use phexusmath.github.io as the base URL.
-        // Fetch via CDN if available (for bypass), but keep the base href on the original domain.
+        // Games in the /complete folder always use their full phexusmath.github.io path as the base URL.
+        // Fetch via CDN if available (for bypass), but keep the base href on the original game path.
         if (isCdnAvailable) {
             fetchUrl = toCdnUrl(e.url);
         }
-        baseHref = "https://phexusmath.github.io/";
+        baseHref = t;
     } else if (e.cdn) {
         fetchUrl = e.cdn;
         baseHref = e.cdn;
