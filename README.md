@@ -1,4 +1,8 @@
-## DONT ADD GAMES I CAN MAKE THEM ALL WORK WAIT TILL I SAY SO
+## HOW TO FIX ALL BROKEN GAMES SUPER SIGMA TUTORIAL (man man man dela dela man man dela dela)
+
+most games are now broken because of that fact essential scripts (ytgame.js,poki-sdk.js , yandex-sdk.js) is not loading properly. When you see these scripts be loaded, modify it go to phexusmath.github.io/files/script-name.js.
+
+Some of the youtube playables games are broken. I can fix them all when i get home so dont even tip dawg.
 
 # size
 
