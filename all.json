@@ -159,7 +159,7 @@
     "name": "Amaze",
     "url": "https://phexusmath.github.io/files/amaze",
     "cdn": "https://cdn.jsdelivr.net/gh/bubbls/youtube-playables@149c5018a75690eac83f052bfc6601e31ec0459b/amaze/",
-    "inject": false
+    "inject": true
   },
   {
     "name": "Andys Apple Farm",

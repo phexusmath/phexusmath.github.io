@@ -131,8 +131,8 @@ async function loadGame(e) {
 async function init() {
     await checkConnectivity();
     try {
-        let t = await fetch("combined_games.json");
-        if (!t.ok) throw Error("combined_games.json not found");
+        let t = await fetch("all.json");
+        if (!t.ok) throw Error("all.json not found");
         let a = await t.json();
         allGames = a.sort((e, t) => e.name.localeCompare(t.name)), renderGrid(allGames)
     } catch (l) {
