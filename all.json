@@ -4418,7 +4418,7 @@
   {
     "name": "Ultrakill Fixed",
     "url": "https://phexusmath.github.io/files/ultrakill-fix",
-    "cdn": null,
+    "cdn": "https://cdn.jsdelivr.net/gh/genizy/web-port@master/ultrakill/",
     "inject": false
   },
   {
