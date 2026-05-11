@@ -530,7 +530,7 @@
   {
     "name": "Bloons Td 4",
     "url": "https://phexusmath.github.io/files/bloons-td-4",
-    "cdn": null,
+    "cdn": "https://cdn.jsdelivr.net/gh/u-cvlassrom-y/google@main/ruffle.js",
     "inject": false
   },
   {
