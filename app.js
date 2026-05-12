@@ -101,19 +101,21 @@ async function loadGame(e) {
     let isCompleteGame = typeof e.url === "string" && e.url.includes("/complete/");
     let fetchUrl, baseHref;
 
-    // 1. Determine the Base URL and Fetch path
     if (isCompleteGame) {
+        // Complete games: always use the phexusmath.github.io URL directly.
         let t = e.url;
         t.endsWith("/") || (t += "/");
         fetchUrl = t;
         baseHref = t;
     } else {
+        // Files games: use e.cdn (a jsDelivr URL), converted to whichever CDN is reachable.
         let cdnUrl = isCdnAvailable && e.cdn ? convertCdnUrl(e.cdn) : e.cdn;
         if (cdnUrl) {
             cdnUrl.endsWith("/") || (cdnUrl += "/");
             fetchUrl = cdnUrl;
             baseHref = cdnUrl;
         } else {
+            // No cdn value in json — fall back to the direct phexusmath.github.io URL.
             let t = e.url;
             t.endsWith("/") || (t += "/");
             fetchUrl = t;
@@ -122,54 +124,31 @@ async function loadGame(e) {
     }
 
     try {
-        // 2. Fetch the game's index file
         let a = await fetch(`${fetchUrl}index.html`),
             l = await a.text();
 
-        // 3. Prepare injection tags
         let baseTag = `<base href="${baseHref}">`;
         let shimTag = "";
-        let memoryTag = "";
-
-        // Only inject memory.js if we are currently using the GitHack route
-        if (activeBaseUrl === "githack") {
-            let memSrc = await getMemorySource();
-            if (memSrc) {
-                // Escape closing script tags to prevent premature script termination
-                let safeMem = memSrc.replace(/<\/script>/gi, "<\\/script>");
-                memoryTag = `<script>${safeMem}</script>`;
-            }
-        }
-
-        // Only inject shim.js if the game entry explicitly asks for it
         if (e.inject === true) {
             let src = await getShimSource();
             if (src) {
-                let safeShim = src.replace(/<\/script>/gi, "<\\/script>");
-                shimTag = `<script>${safeShim}</script>`;
+                let safeSrc = src.replace(/<\/script>/gi, "<\\/script>");
+                shimTag = `<script>${safeSrc}</script>`;
             }
         }
 
-        // 4. Assemble and inject into the HTML string
-        // Remove any existing base tags from the original HTML to avoid conflicts
         l = l.replace(/<base[^>]*>/gi, "");
-        
-        let injection = `${baseTag}${memoryTag ? "\n    " + memoryTag : ""}${shimTag ? "\n    " + shimTag : ""}`;
-
+        let injection = `${baseTag}${shimTag ? "\n    " + shimTag : ""}`;
         if (l.includes("<head>")) {
             l = l.replace("<head>", `<head>\n    ${injection}`);
         } else {
             l = injection + l;
         }
 
-        // 5. Create the Blob and update the iframe
         currentBlobUrl && URL.revokeObjectURL(currentBlobUrl);
         let s = new Blob([l], { type: "text/html" });
         currentBlobUrl = URL.createObjectURL(s);
-        
         gameFrame.src = currentBlobUrl;
-        
-        // 6. UI Transition
         libraryEl.style.display = "none";
         viewportEl.style.display = "flex";
 
